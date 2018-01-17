@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -9,11 +9,11 @@
 /dts-v1/;
 
 #include <dt-bindings/input/input.h>
-#include "imx6ull.dtsi"
+#include "imx6ul.dtsi"
 
 / {
-	model = "Freescale i.MX6 ULL 14x14 EVK Board";
-	compatible = "fsl,imx6ull-14x14-evk", "fsl,imx6ull";
+	model = "Freescale i.MX6 UltraLite 14x14 EVK Board";
+	compatible = "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
 
 	chosen {
 		stdout-path = &uart1;
@@ -62,34 +62,44 @@
 			regulator-max-microvolt = <3300000>;
 		};
 
-		/*reg_sd2_vmmc: regulator@1 {
+		reg_sd1_vmmc: regulator@1 {
 			compatible = "regulator-fixed";
 			regulator-name = "VSD_3V3";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-			gpio = <&gpio1 10 GPIO_ACTIVE_HIGH>;
 			enable-active-high;
-		};*/
-
-		reg_usb_ltemodule: regulator@1 {
-			compatible = "regulator-fixed";
-			regulator-name = "ltemodule-pwr";
-			regulator-min-microvolt = <3800000>;
-			regulator-max-microvolt = <3800000>;
-			gpios = <&gpio5 5 GPIO_ACTIVE_HIGH>;
-			enable-active-high;
-			regulator-boot-on;
 		};
-
-		reg_gpio_wifi: regulator@2 {
-			compatible = "regulator-fixed";
-			regulator-name = "wifi-pwr";
-			regulator-min-microvolt = <3300000>;
-			regulator-max-microvolt = <3300000>;
-			gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
-			regulator-boot-on;
+/*
+		reg_gpio_dvfs: regulator-gpio {
+			compatible = "regulator-gpio";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_dvfs>;
+			regulator-min-microvolt = <1300000>;
+			regulator-max-microvolt = <1400000>;
+			regulator-name = "gpio_dvfs";
+			regulator-type = "voltage";
+			gpios = <&gpio5 3 GPIO_ACTIVE_HIGH>;
+			states = <1300000 0x1 1400000 0x0>;
 		};
+*/
+	};
 
+	sound {
+		compatible = "fsl,imx6ul-evk-wm8904",
+			   "fsl,imx-audio-wm8904";
+		model = "wm8904-audio";
+		cpu-dai = <&sai2>;
+		audio-codec = <&codec>;
+		asrc-controller = <&asrc>;
+		codec-master;
+		gpr = <&gpr>;
+		audio-routing =
+			"Headphone Jack", "HPOUTL",
+			"Headphone Jack", "HPOUTR",
+			"IN2L", "Line In Jack",
+			"IN2R", "Line In Jack",
+			"Mic Jack", "MICBIAS",
+			"IN1L", "Mic Jack";
 	};
 
 	spi4 {
@@ -132,36 +142,28 @@
 		};
 	};
 
-	sound {
-		compatible = "fsl,imx6ul-evk-wm8904",
-			   "fsl,imx-audio-wm8904";
-		model = "wm8904-audio";
-		cpu-dai = <&sai2>;
-		audio-codec = <&codec>;
-		asrc-controller = <&asrc>;
-		gpr = <&gpr>;
-		audio-routing =
-			"Headphone Jack", "HPOUTL",
-			"Headphone Jack", "HPOUTR",
-			"IN2L", "Line In Jack",
-			"IN2R", "Line In Jack",
-			"Mic Jack", "MICBIAS",
-			"IN1L", "Mic Jack";
-	};
+
 };
 
-&gpmi{
-	status = "disabled";
-};
 &cpu0 {
 	arm-supply = <&reg_arm>;
 	soc-supply = <&reg_soc>;
-	/*dc-supply = <&reg_usb_ltemodule>;*/
+	/*dc-supply = <&reg_gpio_dvfs>;*/
 };
 
 &clks {
 	assigned-clocks = <&clks IMX6UL_CLK_PLL4_AUDIO_DIV>;
 	assigned-clock-rates = <786432000>;
+};
+
+&csi {
+	status = "disabled";
+
+	port {
+		csi1_ep: endpoint {
+			remote-endpoint = <&ov5640_ep>;
+		};
+	};
 };
 
 &fec1 {
@@ -192,6 +194,7 @@
 			smsc,disable-energy-detect;
 			reg = <0>;
 		};
+
 		ethphy1: ethernet-phy@1 {
 			compatible = "ethernet-phy-ieee802.3-c22";
 			smsc,disable-energy-detect;
@@ -290,7 +293,6 @@
 			};
 		};
 	};
-
 };
 
 &iomuxc {
@@ -300,15 +302,15 @@
 		pinctrl_hog_1: hoggrp-1 {
 			fsl,pins = <
 				MX6UL_PAD_UART1_RTS_B__GPIO1_IO19	0x17059 /* SD1 CD */
-				MX6UL_PAD_JTAG_MOD__GPIO1_IO10		0x17059 /* WiFi module power */
-				MX6UL_PAD_NAND_CE1_B__GPIO4_IO14	0x17059 /* LTE Reset */
-				MX6UL_PAD_GPIO1_IO00__ANATOP_OTG1_ID    0x17059 /* USB OTG1 ID */
-			>;
-		};
-
-		pinctrl_wifi: wifigrp {
-			fsl,pins = <
-				MX6UL_PAD_JTAG_MOD__GPIO1_IO10		0x17059 /* WiFi module power */
+				MX6UL_PAD_GPIO1_IO09__GPIO1_IO09        0x17059 /* SD1 RESET */
+				/*MX6UL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x80000000*/
+				MX6UL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x1b0b0 /* enet1 reset */
+				MX6UL_PAD_SNVS_TAMPER6__GPIO5_IO06	0x1b0b0 /* enet2 reset */
+				MX6UL_PAD_SNVS_TAMPER5__GPIO5_IO05	0x1b8b0 /* LTE module power */
+				MX6UL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x1b0b0 /* LTE module WakeOut */
+				MX6UL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x1b0b0 /* Camera RST */
+				MX6UL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x1b0b0 /* Camera PWRDN */
+				MX6UL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x1b0b0 /* TP Reset */
 			>;
 		};
 
@@ -329,6 +331,12 @@
 			>;
 		};
 
+		pinctrl_dvfs: dvfsgrp {
+			fsl,pins = <
+				MX6UL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x79
+			>;
+		};
+
 		pinctrl_enet1: enet1grp {
 			fsl,pins = <
 				MX6UL_PAD_ENET1_RX_EN__ENET1_RX_EN	0x1b0b0
@@ -344,8 +352,8 @@
 
 		pinctrl_enet2: enet2grp {
 			fsl,pins = <
-				MX6UL_PAD_GPIO1_IO06__ENET2_MDIO	0x1b0b0
 				MX6UL_PAD_GPIO1_IO07__ENET2_MDC		0x1b0b0
+				MX6UL_PAD_GPIO1_IO06__ENET2_MDIO	0x1b0b0
 				MX6UL_PAD_ENET2_RX_EN__ENET2_RX_EN	0x1b0b0
 				MX6UL_PAD_ENET2_RX_ER__ENET2_RX_ER	0x1b0b0
 				MX6UL_PAD_ENET2_RX_DATA0__ENET2_RDATA00	0x1b0b0
@@ -359,8 +367,8 @@
 
 		pinctrl_flexcan1: flexcan1grp{
 			fsl,pins = <
-				MX6UL_PAD_UART2_RTS_B__FLEXCAN2_RX	0x1b020
-				MX6UL_PAD_UART2_CTS_B__FLEXCAN2_TX	0x1b020
+				MX6UL_PAD_UART3_RTS_B__FLEXCAN1_RX	0x1b020
+				MX6UL_PAD_UART3_CTS_B__FLEXCAN1_TX	0x1b020
 			>;
 		};
 
@@ -414,7 +422,7 @@
 			>;
 		};
 
-		pinctrl_lcdif_dat_16bits: lcdifdatgrp_16bits {
+		pinctrl_lcdif_dat_16bits: lcdifdatbitgrp16bits {
 			fsl,pins = <
 				MX6UL_PAD_LCD_DATA00__LCDIF_DATA00  0x79
 				MX6UL_PAD_LCD_DATA01__LCDIF_DATA01  0x79
@@ -441,6 +449,8 @@
 				MX6UL_PAD_LCD_ENABLE__LCDIF_ENABLE  0x79
 				MX6UL_PAD_LCD_HSYNC__LCDIF_HSYNC    0x79
 				MX6UL_PAD_LCD_VSYNC__LCDIF_VSYNC    0x79
+				/* used for lcd reset */
+				MX6UL_PAD_LCD_RESET__GPIO3_IO04		0x1b0b0
 			>;
 		};
 
@@ -471,6 +481,26 @@
 			>;
 		};
 
+		pinctrl_sim2_1: sim2grp-1 {
+			fsl,pins = <
+				MX6UL_PAD_CSI_DATA03__SIM2_PORT1_PD		0xb808
+				MX6UL_PAD_CSI_DATA04__SIM2_PORT1_CLK		0x11
+				MX6UL_PAD_CSI_DATA05__SIM2_PORT1_RST_B		0xb810
+				MX6UL_PAD_CSI_DATA06__SIM2_PORT1_SVEN		0xb810
+				MX6UL_PAD_CSI_DATA07__SIM2_PORT1_TRXD		0xb811
+				MX6UL_PAD_CSI_DATA02__GPIO4_IO23		0x3008
+			>;
+		};
+
+		pinctrl_spi4: spi4grp {
+			fsl,pins = <
+				MX6UL_PAD_BOOT_MODE0__GPIO5_IO10	0x70a1
+				MX6UL_PAD_BOOT_MODE1__GPIO5_IO11	0x70a1
+				MX6UL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x70a1
+				MX6UL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x80000000
+			>;
+		};
+
 		pinctrl_tsc: tscgrp {
 			fsl,pins = <
 				MX6UL_PAD_GPIO1_IO01__GPIO1_IO01	0xb0
@@ -491,6 +521,8 @@
 			fsl,pins = <
 				MX6UL_PAD_UART2_TX_DATA__UART2_DCE_TX	0x1b0b1
 				MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX	0x1b0b1
+				MX6UL_PAD_UART3_RX_DATA__UART2_DCE_RTS	0x1b0b1
+				MX6UL_PAD_UART3_TX_DATA__UART2_DCE_CTS	0x1b0b1
 			>;
 		};
 
@@ -599,10 +631,21 @@
 				MX6UL_PAD_NAND_DATA07__USDHC2_DATA7 0x170f9
 			>;
 		};
-
-		pinctrl_lcdif_reset: lcdifresetgrp {
+		pinctrl_wdog: wdoggrp {
 			fsl,pins = <
-				MX6UL_PAD_LCD_RESET__GPIO3_IO04		0x1b0b0
+				MX6UL_PAD_LCD_DATA19__WDOG1_WDOG_ANY	0x30b0
+			>;
+		};
+
+		pinctrl_leds: ledgrp {
+			fsl,pins = <
+				MX6UL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x1b0b0
+			>;
+		};
+
+		pinctrl_gpio_key: keygrp {
+			fsl,pins = <
+				MX6UL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x1b0b0
 			>;
 		};
 
@@ -614,62 +657,19 @@
 	};
 };
 
-&iomuxc_snvs {
-	pinctrl-names = "default_snvs";
-	pinctrl-0 = <&pinctrl_hog_2>;
-	imx6ul-evk {
-		pinctrl_hog_2: hoggrp-2 {
-			fsl,pins = <
-				MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00     0x80000000
-				MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09     0x1b0b0 /* enet1 reset */
-				MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07     0x1b0b0 /* LTE module WakeOut */
-				MX6ULL_PAD_SNVS_TAMPER6__GPIO5_IO06     0x1b0b0 /* enet2 reset */
-				MX6ULL_PAD_SNVS_TAMPER5__GPIO5_IO05     0x1b8b0 /* LTE module power */
-				MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03     0x1b0b0 /* Camera RST */
-				MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04     0x1b0b0 /* Camera PWRDN */
-				MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02     0x1b0b0 /* TP Reset */
-			>;
-		};
-
-		pinctrl_spi4: spi4grp {
-			fsl,pins = <
-				MX6ULL_PAD_BOOT_MODE0__GPIO5_IO10        0x70a1
-				MX6ULL_PAD_BOOT_MODE1__GPIO5_IO11        0x70a1
-				MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07      0x70a1
-				MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08      0x80000000
-			>;
-		};
-
-		pinctrl_leds: ledgrp {
-			fsl,pins = <
-				MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01 0x1b0b0
-			>;
-		};
-
-		pinctrl_gpio_key: keygrp {
-			fsl,pins = <
-				MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00 0x1b0b0
-			>;
-		};
-	};
-};
-
-
 &lcdif {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lcdif_dat_16bits
-		     &pinctrl_lcdif_ctrl
-		     &pinctrl_lcdif_reset>;
+		     &pinctrl_lcdif_ctrl>;
 	display = <&display0>;
 	status = "okay";
 
 	display0: display {
 		bits-per-pixel = <16>;
-		bus-width = <16>;
+		bus-width = <24>;
 
 		display-timings {
 			native-mode = <&timing0>;
-
 			timing0: timing0 {
 			clock-frequency = <9200000>;
 			hactive = <480>;
@@ -746,6 +746,22 @@
 	status = "okay";
 };
 
+&sim2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_sim2_1>;
+	assigned-clocks = <&clks IMX6UL_CLK_SIM_SEL>;
+	assigned-clock-parents = <&clks IMX6UL_CLK_SIM_PODF>;
+	assigned-clock-rates = <240000000>;
+	/* GPIO_ACTIVE_HIGH/LOW:sim card voltage control
+	 * NCN8025:Vcc = ACTIVE_HIGH?5V:3V
+	 * TDA8035:Vcc = ACTIVE_HIGH?5V:1.8V
+	 */
+	pinctrl-assert-gpios = <&gpio4 23 GPIO_ACTIVE_HIGH>;
+	port = <1>;
+	sven_low_active;
+	status = "disabled";
+};
+
 &tsc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_tsc>;
@@ -764,6 +780,9 @@
 &uart2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart2>;
+	/* for DTE mode, add below change */
+	/* fsl,dte-mode; */
+	/* pinctrl-0 = <&pinctrl_uart2dte>; */
 	status = "okay";
 };
 
@@ -803,8 +822,7 @@
 	cd-gpios = <&gpio1 19 GPIO_ACTIVE_LOW>;
 	keep-power-in-suspend;
 	enable-sdio-wakeup;
-	bus-width = <4>;
-	status = "okay";
+	vmmc-supply = <&reg_sd1_vmmc>;
 };
 
 &usdhc2 {
@@ -823,9 +841,9 @@
 		};
 	};
 };
-/*
+
 &wdog1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_wdog>;
 	fsl,wdog_b;
-};*/
+};
