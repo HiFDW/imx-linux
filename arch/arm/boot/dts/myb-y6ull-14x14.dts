@@ -638,7 +638,7 @@
 		     &pinctrl_lcdif_ctrl
 		     &pinctrl_lcdif_reset>;
 	display = <&display0>;
-	status = "okay";
+	status = "disabled";
 
 	display0: display {
 		bits-per-pixel = <16>;

@@ -1287,6 +1287,8 @@ static int wm8904_hw_params(struct snd_pcm_substream *substream,
 	unsigned int clock1 = 0;
 	unsigned int dac_digital1 = 0;
 
+		printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
+
 	/* What BCLK do we need? */
 	wm8904->fs = params_rate(params);
 	if (wm8904->tdm_slots) {
@@ -1407,7 +1409,7 @@ static int wm8904_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 {
 	struct snd_soc_codec *codec = dai->codec;
 	struct wm8904_priv *priv = snd_soc_codec_get_drvdata(codec);
-
+	printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 	switch (clk_id) {
 	case WM8904_CLK_MCLK:
 		priv->sysclk_src = clk_id;
@@ -1434,6 +1436,9 @@ static int wm8904_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	struct snd_soc_codec *codec = dai->codec;
 	unsigned int aif1 = 0;
 	unsigned int aif3 = 0;
+	unsigned int tmp1 = 0;
+
+		printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBS_CFS:
@@ -1514,6 +1519,9 @@ static int wm8904_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	snd_soc_update_bits(codec, WM8904_AUDIO_INTERFACE_3,
 			    WM8904_LRCLK_DIR, aif3);
 
+    /*eum*/
+	
+
 	return 0;
 }
 
@@ -1524,7 +1532,7 @@ static int wm8904_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	struct snd_soc_codec *codec = dai->codec;
 	struct wm8904_priv *wm8904 = snd_soc_codec_get_drvdata(codec);
 	int aif1 = 0;
-
+	printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 	/* Don't need to validate anything if we're turning off TDM */
 	if (slots == 0)
 		goto out;
@@ -1683,7 +1691,7 @@ static int wm8904_set_fll(struct snd_soc_dai *dai, int fll_id, int source,
 	struct _fll_div fll_div;
 	int ret, val;
 	int clock2, fll1;
-
+	printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 	/* Any change? */
 	if (source == wm8904->fll_src && Fref == wm8904->fll_fref &&
 	    Fout == wm8904->fll_fout)
@@ -1823,7 +1831,7 @@ static int wm8904_digital_mute(struct snd_soc_dai *codec_dai, int mute)
 		val = WM8904_DAC_MUTE;
 	else
 		val = 0;
-
+	printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 	snd_soc_update_bits(codec, WM8904_DAC_DIGITAL_1, WM8904_DAC_MUTE, val);
 
 	return 0;
@@ -1834,14 +1842,34 @@ static int wm8904_set_bias_level(struct snd_soc_codec *codec,
 {
 	struct wm8904_priv *wm8904 = snd_soc_codec_get_drvdata(codec);
 	int ret;
+		printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 
 	switch (level) {
 	case SND_SOC_BIAS_ON:
+
+		printk("wm8904-hufan ------------------------------------  %s , %d \n",__func__,__LINE__);
+
 		clk_prepare_enable(wm8904->mclk);
+
+
+		snd_soc_update_bits(codec, WM8904_ANALOGUE_LEFT_INPUT_1, WM8904_L_MODE_MASK, 0x01);
+		snd_soc_update_bits(codec, WM8904_ANALOGUE_RIGHT_INPUT_1, WM8904_L_MODE_MASK, 0x01);
+
         snd_soc_update_bits(codec, WM8904_ADC_DIGITAL_VOLUME_RIGHT, WM8904_ADCR_VOL_MASK, WM8904_ADCR_VOL_MASK);
         snd_soc_update_bits(codec, WM8904_ADC_DIGITAL_VOLUME_LEFT, WM8904_ADCL_VOL_MASK, WM8904_ADCL_VOL_MASK);
         snd_soc_update_bits(codec, WM8904_ANALOGUE_LEFT_INPUT_0, WM8904_LIN_VOL_MASK,WM8904_LIN_VOL_MASK);
         snd_soc_update_bits(codec, WM8904_ANALOGUE_RIGHT_INPUT_0, WM8904_RIN_VOL_MASK, WM8904_RIN_VOL_MASK);
+
+//		snd_soc_update_bits(codec, WM8904_ANALOGUE_LEFT_INPUT_0, WM8904_LIN_VOL_SHIFT,WM8904_LIN_VOL_SHIFT);
+//        snd_soc_update_bits(codec, WM8904_ANALOGUE_RIGHT_INPUT_0, WM8904_RIN_VOL_SHIFT, WM8904_RIN_VOL_SHIFT);
+
+//        snd_soc_update_bits(codec, WM8904_AUDIO_INTERFACE_0, WM8904_LOOPBACK_MASK, WM8904_LOOPBACK);
+//        snd_soc_update_bits(codec, WM8904_ADC_DIGITAL_VOLUME_LEFT, WM8904_ADCL_VOL_MASK, 0xa4);
+//        snd_soc_update_bits(codec, WM8904_ADC_DIGITAL_VOLUME_RIGHT, WM8904_ADCR_VOL_MASK, 0xa4);
+
+//        snd_soc_update_bits(codec, WM8904_ANALOGUE_LEFT_INPUT_0, WM8904_LIN_VOL_MASK,WM8904_LIN_VOL_WIDTH);
+//        snd_soc_update_bits(codec, WM8904_ANALOGUE_RIGHT_INPUT_0, WM8904_RIN_VOL_MASK, WM8904_LIN_VOL_WIDTH);
+
 		break;
 
 	case SND_SOC_BIAS_PREPARE:
@@ -2059,7 +2087,7 @@ static void wm8904_handle_pdata(struct snd_soc_codec *codec)
 static int wm8904_probe(struct snd_soc_codec *codec)
 {
 	struct wm8904_priv *wm8904 = snd_soc_codec_get_drvdata(codec);
-
+	printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 	switch (wm8904->devtype) {
 	case WM8904:
 		break;
@@ -2075,6 +2103,7 @@ static int wm8904_probe(struct snd_soc_codec *codec)
 	wm8904_handle_pdata(codec);
 
 	wm8904_add_widgets(codec);
+	printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 
 	return 0;
 }
@@ -2133,6 +2162,8 @@ static int wm8904_i2c_probe(struct i2c_client *i2c,
 	struct wm8904_priv *wm8904;
 	unsigned int val;
 	int ret, i;
+
+		printk("wm8904-hufan %s , %d \n",__func__,__LINE__);
 
 	wm8904 = devm_kzalloc(&i2c->dev, sizeof(struct wm8904_priv),
 			      GFP_KERNEL);
